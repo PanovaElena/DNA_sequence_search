@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 4.1)
+
+project(most_common_string)
+
+option(ENABLE_TEST "Build test" ON)
+option(ENABLE_BENCH "Build benchmarks" ON)
+option(BUILD_STATIC "Build static" OFF)
+option(BUILD_GMOCK "Build gmock" OFF)
+option(USE_SYCL_ESIMD "Use esimd sycl functionality for Intel GPU" OFF)
+
+set(GTEST_GIT_REPO_PATH "${CMAKE_SOURCE_DIR}/3rd-party/gtest" CACHE STRING "Path for GTest git repository")
+
+set(PLATFORM "x86" CACHE STRING "Platform (x86, riscv, nvidia_gpu)")
+set(FRAMEWORK "openmp" CACHE STRING "Framework (openmp, kokkos, sycl, caf, cuda)")
+
+if (NOT "${FRAMEWORK}" STREQUAL "caf")
+    enable_language(CXX)
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    enable_language(CXX Fortran)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
+if ("${FRAMEWORK}" STREQUAL "cuda")
+    enable_language(CUDA)
+endif()
+
+
+add_compile_definitions(GENOME_DIR=\"${CMAKE_SOURCE_DIR}/genome_samples/\")
+
+if ("${PLATFORM}" STREQUAL "x86")
+    add_compile_definitions(__X86__)
+    add_compile_definitions(__AVX512__)
+elseif ("${PLATFORM}" STREQUAL "riscv")
+    add_compile_definitions(__RISCV__)
+    add_compile_definitions(__RVV_1_0__)
+elseif ("${PLATFORM}" STREQUAL "nvidia_gpu")
+    add_compile_definitions(__NVIDIA_GPU__)
+endif()
+if (USE_SYCL_ESIMD)
+    add_compile_definitions(__ESIMD__)
+endif()
+
+if ("${FRAMEWORK}" STREQUAL "openmp")
+    include(cmake/frameworks/openmp.cmake)
+elseif ("${FRAMEWORK}" STREQUAL "kokkos")
+    include(cmake/frameworks/kokkos.cmake)
+elseif ("${FRAMEWORK}" STREQUAL "sycl")
+    include(cmake/frameworks/sycl.cmake)
+elseif ("${FRAMEWORK}" STREQUAL "caf")
+    set(FORTRAN_BINARY_PATH "${CMAKE_BINARY_DIR}/fortran/")
+    include(cmake/frameworks/caf.cmake)
+elseif ("${FRAMEWORK}" STREQUAL "cuda")
+    include(cmake/frameworks/cuda.cmake)
+endif()
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/lib")
+
+if(ENABLE_TEST)
+    add_subdirectory("${GTEST_GIT_REPO_PATH}")
+    add_subdirectory("${CMAKE_SOURCE_DIR}/test")
+endif()
+
+if(ENABLE_BENCH)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/perf")
+endif()
