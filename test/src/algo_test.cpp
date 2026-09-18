@@ -99,7 +99,7 @@ TEST_P(Algo, test_hash3_vector)
 
 #endif
 
-#if (defined(__OPENMP__) && defined(__X86__))
+#if (defined(__OPENMP__) && (defined(__X86__) || defined(__RISCV__)))
 
 TEST_P(Algo, test_naive_block_vector)
 {

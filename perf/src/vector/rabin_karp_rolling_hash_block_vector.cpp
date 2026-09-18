@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-#if (defined(__OPENMP__) && defined(__X86__))  
+#if (defined(__OPENMP__) && (defined(__X86__) || defined(__RISCV__)))
     std::string path = argv[1];
     std::vector<uint32_t> freq;
 
