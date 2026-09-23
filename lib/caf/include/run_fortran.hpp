@@ -15,7 +15,8 @@ forceinline void run_fortran(std::vector<uint32_t>& freq,
         std::to_string(len) + " " + binary_path + output_file_name;
     int result = std::system(command.c_str());
     if (result != 0) {
-        std::cerr << "Error: cannot start fortran program, " << result << std::endl;
+        std::cerr << "Error: cannot start fortran program, " << result << "; " <<
+            "command line is\n" << command << std::endl;
         return;
     }
     

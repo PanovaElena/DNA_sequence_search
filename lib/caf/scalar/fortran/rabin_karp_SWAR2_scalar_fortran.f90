@@ -16,16 +16,27 @@ program rabin_karp_SWAR2_scalar_fortran
     integer(8) :: i, num_imgs, this_img, block_size
     integer(8) :: alloc_size
     integer(8) :: block_start, block_end
+    integer(1) :: write_file_flag
     
-    if (command_argument_count() < 3) then
-        stop 'Usage: program <input_file> <len> <output_file>'
+    flush(6)
+    
+    if (command_argument_count() < 1) then
+        stop 'Usage: program <input_file>'
     end if
-    
     call get_command_argument(1, input_file)
-    call get_command_argument(2, len_str)
-    call get_command_argument(3, output_file)
-    read(len_str, *, iostat=ios) len
-    if (ios /= 0) stop 'Invalid length argument'
+    
+    len = 128
+    if (command_argument_count() >= 2) then
+        call get_command_argument(2, len_str)
+        read(len_str, *, iostat=ios) len
+        if (ios /= 0) stop 'Invalid length argument'
+    endif
+    
+    write_file_flag = 0
+    if (command_argument_count() >= 3) then
+        write_file_flag = 1
+        call get_command_argument(3, output_file)        
+    end if
     
     call read_input_file(input_file, data, size)
 
@@ -45,8 +56,18 @@ program rabin_karp_SWAR2_scalar_fortran
     
     call run_fortran_kernel(data, freq, len, size, time, block_start, block_end)
     
-    call write_result_file(output_file, freq, size, time, block_size)
+    if (write_file_flag > 0) then
+        call write_result_file(output_file, freq, size, time, block_size)
+    else
+        if (this_img == 1) then
+            write(*, '(A,I0,A,I0,A,F10.8,A)') &
+                'text size=', size,    &
+                ', pattern size=', len, &
+                ', time=', time, ' s'
+        end if
+    end if
     
+    flush(6)
     deallocate(data)
     deallocate(freq)
     
